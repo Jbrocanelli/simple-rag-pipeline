@@ -6,3 +6,4 @@ data/vectorstore/
 data/pdf/
 data/text_files/
 .DS_Store
+notebook/
