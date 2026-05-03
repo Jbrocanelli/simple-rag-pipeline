@@ -20,20 +20,21 @@ def create_retrieval_chain(vectorstore, model_name: str = "llama-3.3-70b-versati
         Answer:"""
     )
 
+    """MMR(Maximal Marginal Relevance) balances relevance(how similar the chunk is to the query)
+    and diversity(how diferent the chunk is from other already selected chunks)
+
+    fetch_k is how many candidates it considers before picking the most diverse k"""
     retriever = vectorstore.as_retriever(
-        search_type="similarity_score_threshold",
-        search_kwargs={"k": 5, "score_threshold": 0.3}
+        search_type="mmr",
+        search_kwargs={"k": 5, "fetch_k": 20}
     )
 
-    # the | operator pipes the output of each step as input to the next
-    # RunnablePassThrough passes the unchanged original query as "question"
-    # eg. "context": chunks, "question": "what is attention"
-
-    # prompt takes the dict and fills the prompt template placeholders
-
-    # llm sends the formatted prompt to grok and gets back a ChatMessage object(not a string)
-
-    # StrOutputParser extracts the text content from the ChatMessage object and returns a plain string
+    """the | operator pipes the output of each step as input to the next
+    RunnablePassThrough passes the unchanged original query as "question"
+    eg. "context": chunks, "question": "what is attention"
+    prompt takes the dict and fills the prompt template placeholders
+    llm sends the formatted prompt to grok and gets back a ChatMessage object(not a string)
+    StrOutputParser extracts the text content from the ChatMessage object and returns a plain string"""
     chain = (
         {"context": retriever, "question": RunnablePassthrough()}
         | prompt
