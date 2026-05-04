@@ -10,3 +10,5 @@ sentence-transformers
 faiss-cpu
 chromadb
 python-dotenv
+fastapi
+uvicorn
