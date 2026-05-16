@@ -56,10 +56,3 @@ def split_documents(documents: list, chunk_size=1000, chunk_overlap=200):
     )
 
     return text_splitter.split_documents(documents)
-
-
-    
-
-
-
-    
