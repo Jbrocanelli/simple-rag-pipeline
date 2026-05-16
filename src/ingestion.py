@@ -1,11 +1,12 @@
-from langchain_community.document_loaders import PyMuPDFLoader, DirectoryLoader, TextLoader
+from langchain_community.document_loaders import PyMuPDFLoader, DirectoryLoader, TextLoader, UnstructuredMarkdownLoader
 from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
 from pathlib import Path
 
-LOADERS = [
-      {"glob": "**/*.pdf", "loader_cls": PyMuPDFLoader, "loader_kwargs": {}, "file_type": "pdf"},
-      {"glob": "**/*.txt", "loader_cls": TextLoader, "loader_kwargs": {"encoding": "utf-8"}, "file_type": "txt"},
-  ]
+LOADERS = {
+      ".pdf": {"glob": "**/*.pdf", "loader_cls": PyMuPDFLoader, "loader_kwargs": {}},
+      ".txt": {"glob": "**/*.txt", "loader_cls": TextLoader, "loader_kwargs": {"encoding": "utf-8"}},
+      ".md": {"glob": "**/*.md", "loader_cls": UnstructuredMarkdownLoader, "loader_kwargs": {}}
+  }
 
 def load_documents(directory: str):
     doc_dir = Path(directory)
@@ -15,7 +16,7 @@ def load_documents(directory: str):
     
     all_docs = []
 
-    for loader in LOADERS:
+    for key, loader in LOADERS.items():
         documents = DirectoryLoader(
         doc_dir,
         glob=loader["glob"],
@@ -25,11 +26,26 @@ def load_documents(directory: str):
 
         for d in documents:
             d.metadata["file_name"] = Path(d.metadata["source"]).name 
-            d.metadata["file_type"] = loader["file_type"]
+            d.metadata["file_type"] = key.lstrip(".")
 
         all_docs.extend(documents)
 
     return all_docs
+
+def load_single_document(file_path: str):
+    path = Path(file_path)
+    config = LOADERS.get(path.suffix)
+
+    if config is None:
+        raise ValueError(f"Unsuported file type {path.suffix}")
+    
+    docs = config["loader_cls"](str(path), **config["loader_kwargs"]).load()
+
+    for d in docs:
+        d.metadata["file_name"] = Path(d.metadata["source"]).name 
+        d.metadata["file_type"] = path.suffix.lstrip(".")
+
+    return docs
 
 
 def split_documents(documents: list, chunk_size=1000, chunk_overlap=200):
